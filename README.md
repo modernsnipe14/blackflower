@@ -1,3 +1,6 @@
+[![Build](https://img.shields.io/badge/build-stable-green)](https://www.w2ort.com)
+[![Donate](https://img.shields.io/badge/donate-Paypal-blue)](https://paypal.me/modernsnipe14?country.x=US&locale.x=en_US)
+[![downloads](https://img.shields.io/github/downloads/modernsnipe14/blackflower/total)](https://cad.w2ort.com)
 
 
 Black Flower CAD v1.13.2 - 12 AUG 2022
