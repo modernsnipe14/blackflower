@@ -1,6 +1,6 @@
 VER:=$(shell grep OC_VERSION VERSION | cut -d \" -f 2)
 PATCH:=$(shell grep OC_LEVEL VERSION | cut -d \" -f 2)
-NAME=cad-$(VER)$(PATCH)
+NAME=W2ORT-$(VER)$(PATCH)
 HTDOCS=/var/www/htdocs/cad
 TMP=../tmp/$(NAME)
 
