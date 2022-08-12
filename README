@@ -1,4 +1,4 @@
-Black Flower CAD v1.8.0 - 2011/06/19
+Black Flower CAD v1.13.2 - 2022/08/12
 
 OVERVIEW
 
@@ -9,29 +9,10 @@ OVERVIEW
   
   Contact Information:
   --------------------
-  The current version of this software can be downloaded from:
-    http://www.forlorn.net/cad/
+  The current version of this software can be downloaded from this GitHub or hosting at https://cad.w2ort.com
   
   For bug reports, questions, etc, send email to:
-    cad-info@forlorn.net
-  
-
-UPGRADE INSTRUCTIONS
-
-   (For new installations, see INSTALLATION below.)
-
-   Upgrading from 1.4.x or previous is not supported due to lack of need 
-   and therefore nonexistant database upgrade scripts.  Contact us if this
-   need exists in your environment.
-
-   To upgrade from versions 1.5 or greater:
-
-   * Compare cad.conf.example to your current cad.conf (or run initialize.sh
-     if you do not yet have cad.conf.)  Create or adjust variable names as 
-     necessary.
-   * Run all database schema update scripts in data/updates subdirectory,
-     sequentially by version number.
-
+    w2ort.matt@gmail.com
 
 
 INSTALLATION
@@ -39,11 +20,11 @@ INSTALLATION
   Server Requirements:
   --------------------
   * MySQL database server v5.0 or greater
-  * PHP version 5, with MySQL integration.
+  * PHP version 7+, with MySQL integration.
   * Apache 2.0+ webserver running in Prefork mode, with PHP integration.
   
   * Linux (Debian/CentOS) recommended for mission critical installations.
-  * Microsoft Windows (XP/7) has also been used in development environments.
+  * Microsoft Windows (7/10) has also been used in development environments.
     -> IMPORTANT:  Production use on Microsoft Windows is NOT recommended,
        due to limitations of PHP running under Windows-based webservers and
        using Windows' Event Log emulation for syslog.
@@ -53,90 +34,27 @@ INSTALLATION
   --------------------
   * 1024x768 (or greater) screen resolution required.
     -> 1280x1024 (or greater) resolution is recommended for best results.
-  * Mozilla v1.5+ or Firefox v1.0+ web browser required.
-    -> Internet Explorer IS EXPRESSLY NOT SUPPORTED.
-    -> Safari and Chrome have been minimally tested, and cosmetic issues
-       were noted.  They may or may not be fully functionally compatibile.
-    -> Other browsers have not been tested and are not likely to work.
+  * Browser SupportL
+    -> Chrome: Working
+    -> Mozilla: Unknown
+    -> Firefox: Unknown
+    -> Safari: Unknown
+    -> Internet Explorer IS EXPRESSLY NOT SUPPORTED and other browsers are likely not supported.
 
   * Client system time must be synchronized with CAD server system time.
   
-  * Microsoft Windows (XP/7) is recommended for client operating system.
+  * Microsoft Windows (7 or higher) is recommended for client operating system.
     -> Linux clients have also been tested successfully.
-    -> Apple OS X has been minimally tested.
   
   
   Installation Quick Guide
   ------------------------
-  1) Install the MySQL database server on the target server.
-     *** Linux instructions coming later; refer to MySQL documentation ***
-     *** Windows instructions coming later; refer to MySQL documentation ***
 
-     When installing this server, assign and memorize a password to
-     the MySQL "root" user account.  This will be required during CAD
-     installation.
 
-     Unless you know exactly what you are doing, it is STRONGLY advised 
-     to allow MySQL (port 3306) connections *only* from localhost.
-  
-  2) Install Apache and PHP on the target server.
-     *** Linux instructions coming later; refer to Apache/PHP docs ***
-     *** Windows instructions coming later; refer to Apache/PHP docs ***
 
-  3) Unpack the CAD distribution archive in the desired Web directory.
 
-     Example (for Debian Linux -- HTML documents directory may be different
-     on other operating systems):
 
-     # Acquire adequate (root) permissions to write to destination, then:
 
-       cd /var/www/
-       tar zvxf ~/cad-<version>.tar.gz
-       chown -R www-data.www-data cad-<version>
-       ln -sf cad-<version> cad
-  
-  4) Configure the CAD system.
-
-     If bash and perl are available on your Linux or UNIX server, change 
-     to the CAD directory and execute the "initialize.sh" script.  
-
-       cd /var/www/cad
-       bash ./initialize.sh
-
-     This will create and load the default SQL tables and otherwise 
-     prepare the system for running.  You will be prompted to enter
-     certain usernames and passwords.  Or, if you have a fair level of
-     MySQL command line administration skills, read the installation script
-     and initialize the system manually using the MySQL root account.
-
-     The initialize.sh script does not currently error-detect for an 
-     already existing database or user with specified names.  To run
-     the script multiple times, you must first change or delete conflicting 
-     data.  Be careful.
-  
-     If you are on a multiuser system, ensure that cad.conf is owned
-     by a user/group that is readable only by the webserver, and change
-     file permissions to match, so as to safeguard your passwords.
-
-     *** Manual/Windows documentation to be added ***  
-     
-  5) Configure your Apache installation to serve the CAD application.
-
-     The Apache configuration for your desired CAD HTML directory must
-     permit the "AllowOverride Limit" configuration.  A ".htaccess" file
-     is used to block access to sensitive application files.  If your
-     Apache config does not permit this, update it and reload Apache
-     at this time.
-  
-     Test this configuration by trying to load a file that should
-     be forbidden by the .htaccess rules: 
-       http://<server>/<path-to-CAD-application>/cad.conf
-
-     This should NOT succeed.  If you ARE able to load this file,
-     troubleshoot the Apache site config and provided .htaccess file.
-
-  6) Synchronize the server and all clients to the same time.  
-     See NTP discussion below.
   
   
   To use the CAD system:
