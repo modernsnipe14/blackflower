@@ -5,7 +5,8 @@
 
 Black Flower CAD v1.13.2 - 12 AUG 2022
 
-OVERVIEW
+
+
 
   Description:
   ------------
@@ -39,7 +40,7 @@ INSTALLATION
   * 1024x768 (or greater) screen resolution required.
     -> 1280x1024 (or greater) resolution is recommended for best results.
 
-  Browser Support:
+  *Browser Support:
   -> Chrome: Working
   -> Microsoft Edge: Working
   -> Safari: Untested
