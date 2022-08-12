@@ -194,12 +194,12 @@ function SessionErrorIfReadonly() {
     session_start();
 
     $users = MysqlQuery("SELECT * from $DB_NAME.users WHERE id=".$_SESSION['id']);
-    if (mysql_num_rows($users) != 1) {
-      syslog(LOG_CRITICAL, "INTERNAL ERROR during login (password reset) - Incorrect number of $DB_NAME.users rows for id=".$_SESSION['id'].", expected 1 got ". mysql_num_rows($users));
-      print "INTERNAL ERROR during login (password reset) - Incorrect number of $DB_NAME.users rows for id=".$_SESSION['id'].", expected 1 got ". mysql_num_rows($users);
+    if (mysqli_num_rows($users) != 1) {
+      syslog(LOG_CRITICAL, "INTERNAL ERROR during login (password reset) - Incorrect number of $DB_NAME.users rows for id=".$_SESSION['id'].", expected 1 got ". mysqli_num_rows($users));
+      print "INTERNAL ERROR during login (password reset) - Incorrect number of $DB_NAME.users rows for id=".$_SESSION['id'].", expected 1 got ". mysqli_num_rows($users);
       exit;
       }
-    $answer = mysql_fetch_object($users);
+    $answer = mysqli_fetch_object($users);
     if (!$t_hasher->CheckPassword($_POST['chpw_current'], $answer->password)) {
       HTMLPasswordDialog("Incorrect current password, try again.");
       exit;
@@ -223,17 +223,17 @@ function SessionErrorIfReadonly() {
   if (isset($_POST['login_username']) && isset($_POST['login_password'])) {
     session_start();
     // TODO: clear session values here??
-    $posted_passwordattempt = MysqlClean($_POST, "login_password", 40);
-    $username = MysqlClean($_POST, "login_username", 40);
+    $posted_passwordattempt = MysqlClean($_POST, "login_password");
+    $username = MysqlClean($_POST, "login_username");
 
     $users = MysqlQuery("SELECT * from $DB_NAME.users WHERE UPPER(username) = '".strtoupper($username)."'");
 
-    if (mysql_num_rows($users) >= 1) {
-      if (mysql_num_rows($users) > 1) {
+    if (mysqli_num_rows($users) >= 1) {
+      if (mysqli_num_rows($users) > 1) {
         syslog(LOG_WARNING, "During login - More than one user in db with username [$username], using first row returned."); // this should never happen but is not yet strongly constrained
       }
 
-      $answer = mysql_fetch_object($users);
+      $answer = mysqli_fetch_object($users);
 
       if (isset($answer->locked_out) && $answer->locked_out>0) {
         sleep(4);

@@ -12,12 +12,12 @@
     $oid = MysqlClean($_POST,"oid",20);
     if (isset($_POST["undelete"])) {
       $query = "UPDATE messages SET deleted=0 where oid=$oid";
-      mysql_query($query) or die("update delete query failed: ".mysql_error());
+      MysqlQuery($query) or die("update delete query failed: ".mysql_error());
       $deleted=0;
     }
     elseif (isset($_POST["delete"])) {
       $query = "UPDATE messages SET deleted=1 where oid=$oid";
-      mysql_query($query) or die("update delete query failed: ".mysql_error());
+      MysqlQuery($query) or die("update delete query failed: ".mysql_error());
       $deleted=1;
     }
     elseif (isset($_POST["save"])) {
@@ -25,7 +25,7 @@
       $message = MysqlClean($_POST,"message",255);
       $message_type = MysqlClean($_POST,"message_type",20);
       $query = "UPDATE messages SET unit='$unit', message='$message', message_type='$message_type' WHERE oid=$oid";
-      mysql_query($query) or die("update query failed: ".mysql_error());
+      MysqlQuery($query) or die("update query failed: ".mysql_error());
     }
 
     print "<SCRIPT LANGUAGE=\"JavaScript\">if (window.opener){window.opener.location.reload()} self.close()</SCRIPT>";
@@ -36,11 +36,11 @@
 
   $oid = MysqlClean($_GET,"oid",20);
   $query = "SELECT * FROM messages WHERE oid=$oid";
-  $result = mysql_query($query) or die("select query failed : " . mysql_error());
-  if (mysql_num_rows($result) != 1) {
-    die("Critical error: ".mysql_num_rows($result)." is a bad number of rows when looking for oid=$oid");
+  $result = MysqlQuery($query) or die("select query failed : " . mysql_error());
+  if (mysqli_num_rows($result) != 1) {
+    die("Critical error: ".mysqli_num_rows($result)." is a bad number of rows when looking for oid=$oid");
   }
-  $messagerow = mysql_fetch_array($result, MYSQL_ASSOC);
+  $messagerow = mysqli_fetch_array($result, MYSQLI_ASSOC);
   $ts = $messagerow["ts"];
   $unit = $messagerow["unit"];
   $message = $messagerow["message"];
@@ -80,17 +80,21 @@
      print "<select name=\"unit\">\n";
    }
    $query = "SELECT unit FROM units";
-   $result = mysql_query($query) or die("Query failed : " . mysql_error());
+   $result = MysqlQuery($query) or die("Query failed : " . mysql_error());
    $unitnames = array();
-   while ($line = mysql_fetch_array($result, MYSQL_ASSOC)) {
+   
+   echo '<option value=""></option>';
+   
+   while ($line = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
      array_push($unitnames, $line["unit"]);
    }
    natsort($unitnames);
    foreach ($unitnames as $unitname) {
       echo "<option ";
       if (!strcmp($unitname, $unit)) echo " selected ";
-      echo " value=\"$unitname\">$unitname</option>\n";
+	  echo " value=\"$unitname\">$unitname</option>\n";
    }
+
    print "</select>\n";
 ?>
 <?php
@@ -103,9 +107,9 @@
          print "<select name=\"message_type\">\n";
      
        $query = "SELECT message_type FROM message_types";
-       $result = mysql_query($query) or die("Query failed : " . mysql_error());
+       $result = MysqlQuery($query) or die("Query failed : " . mysql_error());
   
-       while ($line = mysql_fetch_array($result, MYSQL_ASSOC)) {
+       while ($line = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
           if (!strcmp($line["message_type"], $message_type)) 
             echo "<option selected value=\"". $line["message_type"] ."\">". $line["message_type"] ."\n";
           else
@@ -150,5 +154,5 @@
 </body>
 </html>
 
-<?php mysql_free_result($result) ?>
-<?php mysql_close($link) ?>
+<?php mysqli_free_result($result) ?>
+<?php mysqli_close($link) ?>

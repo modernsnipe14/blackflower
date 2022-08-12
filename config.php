@@ -58,7 +58,7 @@
       }
 
       $pwcheck = MysqlQuery("SELECT password FROM $DB_NAME.users WHERE username='".$_SESSION['username']."'");
-      $rows = mysql_num_rows($pwcheck);
+      $rows = mysqli_num_rows($pwcheck);
       if ($rows != 1) {
         syslog(LOG_CRITICAL, "Checking [".$_SESSION['username']."] password for change, found $rows rows (expected 1)");
         print "INTERNAL ERROR [config.php] SELECT password found $rows rows (expected 1) for username ".$_SESSION['username'];
@@ -66,7 +66,7 @@
       }
       else {
         $hash = $t_hasher->HashPassword($tainted_newpw1);
-        $answer = mysql_fetch_object($pwcheck);
+        $answer = mysqli_fetch_object($pwcheck);
         if ($DEBUG && $tainted_newpw1 && $tainted_newpw1 == $tainted_newpw2) {
           print "<!-- Hash of new password is: $hash -->\n\n\n";
         }
@@ -142,7 +142,7 @@ function unitCheckboxState() {
   <tr>
     <td>&nbsp;</td>
     <td align="right"><input type="checkbox" name="incidents_hide_units_oos" id="incidents_hide_units_oos" <?php
-        if ($_COOKIE["incidents_hide_units_oos"] == "yes") print "checked";?>
+        if (!isset($_COOKIE["incidents_hide_units_oos"]) || $_COOKIE["incidents_hide_units_oos"] == "yes") print "checked";?>
         value="yes" /></td>
     <td>Hide Out of Service units</td>
   </tr>

@@ -1,47 +1,52 @@
 <?php
+
+
   if (!@include('cad.conf')) {
     print "Critical error: CAD configuration file is missing or unreadable.  Contact your CAD system administrator.";
     exit;
   }
 
-  $link = mysql_connect($DB_HOST, $DB_USER, $DB_PASS) or die("Could not connect : " . mysql_error());
-  mysql_select_db($DB_NAME) or die("Could not select database");
+  $link = new mysqli($DB_HOST, $DB_USER, $DB_PASS) or die("Could not connect : " . $link->error);
+  $link->select_db($DB_NAME) or die("Could not select database");
 
   function MysqlQuery ($sqlquery) {
     global $link;
-    $return = mysql_query($sqlquery, $link) or die("CRITICAL ERROR\nIn query: $sqlquery<br>\nError: ".mysql_error());
+    $return = $link->query($sqlquery) or die("CRITICAL ERROR\nIn query: $sqlquery<br>\nError: ".$link->error);
     return $return;
   }
 
 
   function MysqlGrabData ($sqlquery) {
     $return = MysqlQuery($sqlquery);
-    $num_rows = mysql_num_rows($return);
+    $num_rows = mysqli_num_rows($return);
     if ($num_rows != 1) {
       print "Internal error, expected 1 row (got $num_rows) in query [$sqlquery]";
       syslog(LOG_CRIT, "MysqlGrabData: Internal error - saw $num_rows rows for [$sqlquery]");
     }
-    $rval = mysql_fetch_array($return, MYSQL_NUM);
-    mysql_free_result($return);
+    $rval = mysqli_fetch_array($return, MYSQLI_NUM);
+    mysqli_free_result($return);
     return $rval[0];
   }
 
-  function MysqlClean ($array, $index, $maxlength) {
+  function MysqlClean ($array, $thing) {
     global $link;
-    if (isset($array["{$index}"])) {
-      $input = substr($array["{$index}"], 0, $maxlength);
-      if (get_magic_quotes_gpc()) {
-        $input = stripslashes($input);
-        $input = mysql_real_escape_string($input, $link);
-      }
-      else {
-        $input = mysql_real_escape_string($input, $link);
-      }
-      return ($input);
-    }
-    return NULL;
+    $input = $link -> real_escape_string ($array[$thing]);
+    return $input;
   }
-
+  function InsertID ()
+  {
+	  global $link;
+	  //the function call below is causing an infinite loop.  I'm not sure what the intention of this function is,
+	  //so I'm not sure what direction to go in to fix this.
+	  $rid = InsertID($link);
+	  return $rid;
+  }
+  function MYAFFROWS ()
+  {
+	  global $link;
+	  $thing = mysqli_affected_rows ($link);
+	  return $thing;
+  }
   function MysqlUnClean ($input) {
     $input = htmlentities($input);
     return ($input);

@@ -115,8 +115,8 @@
       $unit = $_GET['unit'];
       $newunit = 0;
       $unitresult = MysqlQuery("SELECT * from units where unit = '$unit'");
-      $unitline = mysql_fetch_array($unitresult, MYSQL_ASSOC) or die ("Unit $unit not found in table!");
-       mysql_free_result($unitresult);
+      $unitline = mysqli_fetch_array($unitresult, MYSQLI_ASSOC) or die ("Unit $unit not found in table!");
+       mysqli_free_result($unitresult);
     }
   }
   elseif (isset($_GET["new-unit"])) {
@@ -130,13 +130,15 @@
     $unitline["status_comment"] = "";
     $unitline["personnel"] = "";
     $unitline["update_ts"] = "";
+	$unitline["location"] = "";
+	$unitline["notes"] = "";
   }
   elseif (isset($_GET["unit"])) {
     $unit = MysqlClean($_GET,"unit",20);
     $newunit = 0;
     $unitresult = MysqlQuery("SELECT * from units where unit = '$unit'");
-    $unitline = mysql_fetch_array($unitresult, MYSQL_ASSOC) or die ("unit not found in table");
-     mysql_free_result($unitresult);
+    $unitline = mysqli_fetch_array($unitresult, MYSQLI_ASSOC) or die ("unit not found in table");
+     mysqli_free_result($unitresult);
   }
   elseif (isset($_POST['add_pageout'])) {
     if (!CheckAuthByLevel('create_unitpaging',$_SESSION['access_level'])) {
@@ -176,33 +178,33 @@
     # TODO 1.7: replace this with api call
     #
     
-    if (!mysql_query("INSERT into $DB_PAGING_NAME.batches (from_user_id, from_ipaddr, orig_message, entered) ".
+    if (!MysqlQuery("INSERT into $DB_PAGING_NAME.batches (from_user_id, from_ipaddr, orig_message, entered) ".
                      " VALUES (0, '$ipaddr', '$message', NOW() )", $paginglink) || 
-        mysql_affected_rows() != 1) {
+        MYAFFROWS() != 1) {
       syslog(LOG_WARNING, "Error inserting row into database $DB_PAGING_NAME.batches as [$DB_PAGING_HOST/$DB_PAGING_USER]");
       $success = 0;
     }
     else {
-      $batch_id = mysql_insert_id();
+      $batch_id = InsertID();
    
-      if (!mysql_query("INSERT into $DB_PAGING_NAME.messages (from_user_id, to_person_id, message) VALUES ".
+      if (!MysqlQuery("INSERT into $DB_PAGING_NAME.messages (from_user_id, to_person_id, message) VALUES ".
                        "(0, $to_person_id, '$message')", $paginglink) ||
-            mysql_affected_rows() != 1) {
+            MYAFFROWS() != 1) {
         syslog(LOG_WARNING, "Error inserting row into $DB_PAGING_NAME.messages as [$DB_PAGING_HOST/$DB_PAGING_USER]");
         $success = 0;
       }
-      $msg_id = mysql_insert_id();
+      $msg_id = InsertID();
         
-      if (!mysql_query("INSERT into $DB_PAGING_NAME.batch_messages (batch_id, msg_id) VALUES ".
+      if (!MysqlQuery("INSERT into $DB_PAGING_NAME.batch_messages (batch_id, msg_id) VALUES ".
                           "($batch_id, $msg_id)", $paginglink) ||
-          mysql_affected_rows() != 1) {
+          MYAFFROWS() != 1) {
         syslog(LOG_WARNING, "Error inserting row into $DB_PAGING_NAME.batch_messages as [$DB_PAGING_HOST/$DB_PAGING_USER]");
         $success = 0;
       }
 
-      if (!mysql_query("INSERT into $DB_PAGING_NAME.send_queue (status, msg_id, queued) VALUES ".
+      if (!MysqlQuery("INSERT into $DB_PAGING_NAME.send_queue (status, msg_id, queued) VALUES ".
                           "('Queued', $msg_id, NOW())", $paginglink) ||
-          mysql_affected_rows() != 1) {
+          MYAFFROWS() != 1) {
         syslog(LOG_WARNING, "Error inserting row into $DB_PAGING_NAME.send_queue as [$DB_PAGING_HOST/$DB_PAGING_USER]");
         $success = 0;
       }
@@ -210,7 +212,7 @@
     if ($success) {
       syslog(LOG_INFO, $_SESSION['username'] . " sent a manual page to unit [$unit], person_id [$to_person_id].");
     }
-    mysql_close($paginglink);
+    mysqli_close($paginglink);
 
     header("Location: edit-unit.php?unit=".$_POST['unit']."&pagesent=".$success);
     exit;
@@ -227,7 +229,7 @@
         }
         syslog(LOG_INFO, $_SESSION['username'] . ' deleted page-out of pager ID ' . $matches[2] . ' from unit [' . $_POST['unit'].']');
         MysqlQuery("DELETE FROM unit_incident_paging WHERE row_id=" . $matches[1] );
-        if (mysql_affected_rows() != 1) {
+        if (MYAFFROWS() != 1) {
           syslog(LOG_WARNING, "Error while deleting row_id " . $matches[1] . " from unit_incident_paging");
         }
         $action = 1;
@@ -312,7 +314,7 @@
     <?php
       $roles = MysqlQuery("SELECT role FROM unit_roles");
       print "<option value=\"\"></option>\n";
-      while ($role_row = mysql_fetch_object($roles)) {
+      while ($role_row = mysqli_fetch_object($roles)) {
         $role = $role_row->role;
         if ($unitline["role"] == $role) 
           print "<option selected value=\"$role\">$role</option>\n";
@@ -353,7 +355,7 @@
       $avail_asses = MysqlQuery('SELECT * FROM unit_assignments');
 
       print "<option value=\"\">(none)</option>\n";
-      while ($avail_assignment = mysql_fetch_object ($avail_asses)) {
+      while ($avail_assignment = mysqli_fetch_object ($avail_asses)) {
         print "<option ";
         if ($unitline["assignment"] == $avail_assignment->assignment)
           print "selected ";
@@ -395,7 +397,7 @@
         print "<select name=\"status\" <?php print $disabledp ?> id=\"status\">\n";
         $statusset=0;
         $statusresult = MysqlQuery("SELECT * from status_options");
-        while ($line = mysql_fetch_array($statusresult, MYSQL_ASSOC)) {
+        while ($line = mysqli_fetch_array($statusresult, MYSQLI_ASSOC)) {
           // Can't set to these two status options manually:
           if ($line["status"] != 'Attached to Incident' &&
               $line["status"] != 'Staged At Location') {
@@ -410,7 +412,7 @@
         if (!$statusset) {
           echo "        <option selected value=\"\">\n";
         }
-        mysql_free_result($statusresult);
+        mysqli_free_result($statusresult);
         print "</select>\n";
       }
     ?>
@@ -441,9 +443,9 @@
     <td class="text" colspan="5">
     <label for="location" accesskey="l">
     <input name="location" id="location" <?php print $disabledp ?> type="text" maxlength="250" size="80"
-     value="<?php print MysqlUnClean($unitline["location"])?>" />
+     value="<?php print MysqlUnClean($unitline["location"]);?>" />
     </label>
-    <input type="hidden" name="previous_location" value="<?php print $unitline["location"];?>" />
+    <input type="hidden" name="previous_location" value="<?php print "location";?>" />
     </td>
     </tr>
 
@@ -465,9 +467,9 @@
     <td class="text" colspan="5">
     <label for="notes" accesskey="o">
     <input name="notes" id="notes" <?php print $disabledp ?> type="text" maxlength="250" size="80"
-     value="<?php print MysqlUnClean($unitline["notes"])?>" />
+     value="<?php print MysqlUnClean($unitline["notes"]);?>" />
     </label>
-    <input type="hidden" name="previous_notes" value="<?php print $unitline["notes"];?>" />
+    <input type="hidden" name="previous_notes" value="<?php print "notes";?>" />
     </td>
     </tr>
 
@@ -557,9 +559,9 @@
     <?php
     $querytext = "SELECT person_id,name FROM $DB_PAGING_NAME.people ".
       " WHERE UPPER(REPLACE(name, ' ', '')) = '" . strtoupper(str_replace(' ', '', $unit)) . "'";
-    $pager_query = mysql_query($querytext, $paginglink) or die ("<b>Problem with query: </b><font color=red> $querytext </font>");
-    if (mysql_num_rows($pager_query)) {
-      $pager = mysql_fetch_object($pager_query);
+    $pager_query = MysqlQuery($querytext, $paginglink) or die ("<b>Problem with query: </b><font color=red> $querytext </font>");
+    if (mysqli_num_rows($pager_query)) {
+      $pager = mysqli_fetch_object($pager_query);
       print "<tr><td class=label>Send page to <b>$unit</b>: \n";
       print "<INPUT type=hidden name=\"to_person_id\" value=\"" . $pager->person_id."\">\n";
       print "<INPUT type=text onfocus=\"focusPaging(true)\" name=\"pagetext\" size=\"30\" maxlength=\"80\">\n";
@@ -613,15 +615,15 @@
 <?php 
 
     $pplquery = "SELECT * FROM $DB_PAGING_NAME.people WHERE is_active=1 ORDER BY name";
-    $options_query = mysql_query($pplquery, $paginglink) or die ("<b>Problem with query</b>: <font color=red> $pplquery</font>");
+    $options_query = MysqlQuery($pplquery, $paginglink) or die ("<b>Problem with query</b>: <font color=red> $pplquery</font>");
     $Pagers = array();
-    while ($pager_option = mysql_fetch_object($options_query)) {
+    while ($pager_option = mysqli_fetch_object($options_query)) {
       $Pagers[$pager_option->person_id] = $pager_option->name;
     }
     $pageout_qty = MysqlGrabData("SELECT COUNT(*) FROM unit_incident_paging WHERE unit='$unit'");
     $pageout_query = MysqlQuery("SELECT * FROM unit_incident_paging WHERE unit='$unit'");
     // TODO: set access level dynamically
-    if (mysql_num_rows($pageout_query) || CheckAuthByLevel('create_unitpaging',$_SESSION['access_level'])) {
+    if (mysqli_num_rows($pageout_query) || CheckAuthByLevel('create_unitpaging',$_SESSION['access_level'])) {
 ?>
 
   <!-- Begin Unit AutoPage Row: Labels -->
@@ -641,8 +643,8 @@ When <?php print $unit?> is assigned to an incident, CAD will page a notificatio
 
     <table >
 <?php
-      if (mysql_num_rows($pageout_query)) {
-        while ($pageout_rcpt = mysql_fetch_object($pageout_query)) {
+      if (mysqli_num_rows($pageout_query)) {
+        while ($pageout_rcpt = mysqli_fetch_object($pageout_query)) {
           // TODO: set access level dynamically
           if ($pageout_rcpt->to_person_id == 0) {
             print "<font color=red>Bad data needs conversion</font></td>";
@@ -685,7 +687,7 @@ When <?php print $unit?> is assigned to an incident, CAD will page a notificatio
       }
       print "</SELECT></td><td class=\"label\"><input type=submit value=\"Add\" name=\"add_pageout\"></td>\n";
     }
-    mysql_close($paginglink);
+    mysqli_close($paginglink);
 
 ?>
 </tr>
