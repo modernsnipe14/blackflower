@@ -17,11 +17,11 @@
   }
 
   // Check if magic_quotes_runtime is active, if it's not, deprecate it to avoid stdout corruption in reports PDFs
-  if(get_magic_quotes_runtime())
-  {
+  //if(get_magic_quotes_runtime())
+  //{
       // Deactivate
-      set_magic_quotes_runtime(false);
-  }
+    //  set_magic_quotes_runtime(false);
+  //}
 
 
   define("THIS_HOUR", date("H"));
