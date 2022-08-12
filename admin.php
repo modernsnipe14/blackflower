@@ -24,7 +24,7 @@
 <table width="350" style="border: 3px ridge blue; padding: 5px; background-color: #dddddd">
   <tr><td><a href="config-users.php">Edit Users</a></td></tr>
   <tr><td><a href="config-cleardb.php">Archive and Clear Database</a></td></tr>
-  <tr><td><font color="gray">Manage Database Archives</font>  (Not developed yet)</td></tr>
+  <tr><td><a href='https://www.w2ort.com'>W2ORT - Home</a></td></tr>
 </table>
 </td>
 
