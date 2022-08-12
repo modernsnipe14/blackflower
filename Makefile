@@ -17,9 +17,3 @@ package:
 	cd ../tmp; cp $(NAME).tar.gz $(HTDOCS)/downloads/
 	cp CHANGES $(HTDOCS)/CHANGES.txt
 	chmod 644 $(HTDOCS)/downloads/$(NAME).tar.gz $(HTDOCS)/CHANGES.txt
-
-
-tag:
-	svn copy https://secure.forlorn.net/svn/cad/trunk \
-                 https://secure.forlorn.net/svn/cad/tags/$(VER)$(PATCH)
-
