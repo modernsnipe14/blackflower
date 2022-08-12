@@ -17,7 +17,7 @@
 <p class="textj">
 This page provides brief instructions on how to use the software.  This software is still
 under development, so if you have a question about it, a feature suggestion or bug report,
-send email to <a href="mailto:cad-info@forlorn.net">&lt;cad-info@forlorn.net&gt;</a>.
+send email to <a href="mailto:w2ort.matt@gmail.com">&lt;w2ort.matt@gmail.com&gt;</a>.
 <p>
 <b>General Usage Notes</b>
 <p class="textj">
