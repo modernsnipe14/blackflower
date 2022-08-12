@@ -40,12 +40,12 @@ INSTALLATION
   * 1024x768 (or greater) screen resolution required.
     -> 1280x1024 (or greater) resolution is recommended for best results.
 
-  *Browser Support:
-  -> Chrome: Working
-  -> Microsoft Edge: Working
-  -> Safari: Untested
-  -> Firefox: Untested
-  -> Internet Explorer is NOT supported, any other browsers not listed will not be supported.
+  * Browser Support:
+    -> Chrome: Working
+    -> Microsoft Edge: Working
+    -> Safari: Untested
+    -> Firefox: Untested
+    -> Internet Explorer is NOT supported, any other browsers not listed will not be supported.
 
   * Client system time must be synchronized with CAD server system time.
   
