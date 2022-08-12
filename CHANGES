@@ -1,6 +1,17 @@
 CHANGES
 -------
 
+
+---------------------------
+Version 1.13.2 - 2022-08-12
+---------------------------
+[major] Complete overhaul of CAD to PHP v8
+[bugfix] Fixed staging location not populating in logs
+[bugfix] Fixed log viewer to default to 25
+[bugfix] Can now leave field blank when inputing logs
+[minor]  Added tone following creation of new call
+
+
 ---------------------------
 Version 1.12.3 - 2016-07-22
 ---------------------------
