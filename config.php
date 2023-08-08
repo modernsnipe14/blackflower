@@ -124,6 +124,16 @@ function unitCheckboxState() {
   <td align="left" width="400">
   <form name="myform" method="post" action="config.php">
 
+<br />&nbsp;<b>Computer Aided Dispatch - Preferences</b><br />
+  <table width="350" style="background-color: #dddddd; border: 1px solid gray">
+  <tr>
+    <td colspan=2>Thank you for using W2ORT's CAD.</td>
+  </tr>
+  <tr>
+    <td colspan=2>Please contact me for any issues!</td>
+  </tr>
+</table>
+    
 <!-- Incidents -->
 <br />&nbsp;<b>Incidents Preferences</b><br />
   <table width="350" style="background-color: #dddddd; border: 1px solid gray">
