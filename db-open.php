@@ -33,14 +33,12 @@
     $input = $link -> real_escape_string ($array[$thing]);
     return $input;
   }
-  function InsertID ()
-  {
-	  global $link;
-	  //the function call below is causing an infinite loop.  I'm not sure what the intention of this function is,
-	  //so I'm not sure what direction to go in to fix this.
-	  $rid = InsertID($link);
-	  return $rid;
-  }
+function InsertID()
+{
+    global $link;
+    $rid = mysqli_insert_id($link);
+    return $rid;
+}
   function MYAFFROWS ()
   {
 	  global $link;
