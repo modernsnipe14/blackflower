@@ -1,6 +1,7 @@
 <?php
 
 define('FPDF_FONTPATH','font/');
+require('cad.conf');
 require('fpdf.php');
 require_once('db-open.php');
 include('local-dls.php');
@@ -175,14 +176,15 @@ if($opencount > 0) {
 
     function Header()
     {
-        global $HEADER_LOGO;
-        $this->Image("$HEADER_LOGO",175,8,20);
+        global $REPORTS_LOGO;
+        $this->Image("$REPORTS_LOGO",175,8,20);
         $this->SetFillColor(230);
 
         // top row
+		global $REPORTS_TITLE;
         $this->SetY(12);
         $this->SetFont('Arial','B',14);
-        $this->Cell(160,5,'Black Rock City ESD - Incidents Report',0,0);
+        $this->Cell(160,5,$REPORTS_TITLE,0,0);
 
         $this->SetFont('Arial','',12);
         // bottom row
