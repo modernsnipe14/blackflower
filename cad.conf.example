@@ -12,9 +12,13 @@
   $DB_PAGING_PASS = "cad-password--unused-by-default";
   $ALLOW_MANUAL_PAGE = 0;  // Can a dispatcher page a unit manually from CAD?  This feature has problems, use with care; default is now 0 (don't allow it.)
 
-// Header display:
+// Header display (MUST BE PNG):
   $HEADER_LOGO = "Logos/logo.png";
   $HEADER_TITLE = "Black&nbsp;Flower<br>Computer&nbsp;Aided&nbsp;Dispatch";
+
+// Reports Header display (MUST BE JPG):
+  $REPORTS_LOGO = "Logos/logo2.jpg";
+  $REPORTS_TITLE = "Black Flower Computer Aided Dispatch";
 
 // Booleans:
   $BULLETIN_TITLE_SCAN = 1;      //
@@ -26,7 +30,7 @@
   $DEBUG = 0;                    // Debug logging mode (0 or 1).
 
 // Scalars:
-  $MAX_LOGIN_ATTEMPTS = 3;        // Max attempts before locking user account.
+  $MAX_LOGIN_ATTEMPTS = 3;                      // Max attempts before locking user account.
   $ACCESS_LEVEL_EDIT_CHANNELS = 5;              // Access level required to edit channels.  Renamed from ACCESS_LEVEL_EDITCHANNELS in v1.11.0.
   $ACCESS_LEVEL_EDIT_USERS = 10;                // Access level required to edit user accounts.
   $ACCESS_LEVEL_ADMIN_GENERAL = 10;             // Access level required for admin functions overall.
@@ -34,7 +38,7 @@
   $ACCESS_LEVEL_ADMIN_CLEARDB = 10;             // Access level required for database clearing functions.
   $ACCESS_LEVEL_EDIT_REPORT_FILTERS = 10;       // Access level required to edit reporting filters.
   $ACCESS_LEVEL_CREATE_BULLETINS = 5;           // Access level required to create new bulletins.
-  $ACCESS_LEVEL_IMPORT_BULLETINS = 10;           // Access level required to import bulletins from old databases.
+  $ACCESS_LEVEL_IMPORT_BULLETINS = 10;          // Access level required to import bulletins from old databases.
   $ACCESS_LEVEL_REVIEW_INCIDENTS = 5;           // Access level required to review and close incidents (see $SUPERVISOR_INCIDENT_REVIEW.)
   $ACCESS_LEVEL_ACCESS_REPORTS = 10;            // Access level required to access reporting functions.
   $ACCESS_LEVEL_CREATE_UNITS = 5;               // Access level required to create units.
