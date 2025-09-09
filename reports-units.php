@@ -1,344 +1,112 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-define('FPDF_FONTPATH','font/');
-require('fpdf.php');
-require_once('db-open.php');
-include('local-dls.php');
-include('functions.php');
-require_once('session.inc');
-$subsys="reports";
+define('FPDF_FONTPATH', __DIR__ . '/font/');
+require_once('cad.conf');
+require_once('fpdf.php');
 
-
-  if (!CheckAuthByLevel('reports', $_SESSION["access_level"])) {
-    header_html('Dispatch :: Access Restricted');
-    include('include-title.php');
-    print "Access level too low to access Reports page.";
-    exit;
-  }
-
-header('Content-type: application/pdf');
+// --- Database connect ---
+$link = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
+if ($link->connect_error) {
+    header('Content-Type: text/plain');
+    die("Database connection failed: " . $link->connect_error);
+}
 
 class PDF extends FPDF
 {
-var $widths;
-var $aligns;
-var $showcriteria;
-
-function SetReportsCriteria($unit, $date) {
-  $this->showcriteria = "For $unit activity on $date ";
-}
-
-function Header()
-{
-    $this->Image('Logos/logo-esd.jpg',175,8,16);
-    $this->SetFillColor(230);
-
-    // top row
-    $this->SetY(12);
-    $this->SetFont('Arial','B',14);
-    $this->Cell(160,5,'Black Rock City ESD - Unit Report',0,0);
-
-    $this->SetFont('Arial','',10);
-    // bottom row
-    $this->SetY(19);
-    $this->Cell(80,5,'Report written at: '.NOW,0,0,'L');
-    $this->Cell(80,5,$this->showcriteria,0,0,'L');
-    $this->Ln(8);
-}
-
-//Page footer
-function Footer()
-{
-    //Position at 1.5 cm from bottom
-    $this->SetY(-15);
-    //Arial italic 8
-    $this->SetFont('Arial','',8);
-    //Page number
-    $this->Cell(0,10,'Page '.$this->PageNo().' of {nb}',0,0,'C');
-
-}
-
-
-function SetWidths($w)
-{
-    //Set the array of column widths
-    $this->widths=$w;
-}
-
-function SetAligns($a)
-{
-    //Set the array of column alignments
-    $this->aligns=$a;
-}
-
-function Row($data)
-{
-    //Calculate the height of the row
-    $nb=0;
-    for($i=0;$i<count($data);$i++)
-        $nb=max($nb,$this->NbLines($this->widths[$i],$data[$i]));
-    $h=5*$nb;
-    //Issue a page break first if needed
-    $this->CheckPageBreak($h);
-    //Draw the cells of the row
-    for($i=0;$i<count($data);$i++)
+    function Header()
     {
-        $w=$this->widths[$i];
-        $a=isset($this->aligns[$i]) ? $this->aligns[$i] : 'L';
-        //Save the current position
-        $x=$this->GetX();
-        $y=$this->GetY();
-        //Draw the border
-        $this->Rect($x,$y,$w,$h);
-        //Print the text
-        $this->MultiCell($w,5,$data[$i],0,$a);
-        //Put the position to the right of the cell
-        $this->SetXY($x+$w,$y);
-    }
-    //Go to the next line
-    $this->Ln($h);
-}
-
-function CheckPageBreak($h)
-{
-    //If the height h would cause an overflow, add a new page immediately
-    if($this->GetY()+$h>$this->PageBreakTrigger)
-        $this->AddPage($this->CurOrientation);
-}
-
-function NbLines($w,$txt)
-{
-    //Computes the number of lines a MultiCell of width w will take
-    $cw=&$this->CurrentFont['cw'];
-    if($w==0)
-        $w=$this->w-$this->rMargin-$this->x;
-    $wmax=($w-2*$this->cMargin)*1000/$this->FontSize;
-    $s=str_replace("\r",'',$txt);
-    $nb=strlen($s);
-    if($nb>0 and $s[$nb-1]=="\n")
-        $nb--;
-    $sep=-1;
-    $i=0;
-    $j=0;
-    $l=0;
-    $nl=1;
-    while($i<$nb)
-    {
-        $c=$s[$i];
-        if($c=="\n")
-        {
-            $i++;
-            $sep=-1;
-            $j=$i;
-            $l=0;
-            $nl++;
-            continue;
+        global $REPORTS_LOGO;
+        if (!empty($REPORTS_LOGO) && file_exists($REPORTS_LOGO)) {
+            $this->Image($REPORTS_LOGO, 175, 8, 20);
         }
-        if($c==' ')
-            $sep=$i;
-        $l+=$cw[$c];
-        if($l>$wmax)
-        {
-            if($sep==-1)
-            {
-                if($i==$j)
-                    $i++;
+        $this->SetFont('Arial','B',14);
+        $this->Cell(0,10,'Unit Report',0,1,'L');
+        $this->Ln(5);
+    }
+
+    function Footer()
+    {
+        $this->SetY(-15);
+        $this->SetFont('Arial','I',8);
+        $this->Cell(0,10,'Page '.$this->PageNo().'/{nb}',0,0,'C');
+    }
+}
+
+try {
+    while (ob_get_level()) { ob_end_clean(); }
+
+    $unit      = isset($_GET['unit']) ? $_GET['unit'] : '';
+    $startdate = isset($_GET['startdate']) ? $_GET['startdate'] : '';
+    $enddate   = isset($_GET['enddate']) ? $_GET['enddate'] : '';
+
+    if (empty($startdate)) $startdate = '1900-01-01';
+    if (empty($enddate))   $enddate   = date('Y-m-d');
+
+    $pdf = new PDF();
+    $pdf->AliasNbPages();
+    $pdf->AddPage();
+    $pdf->SetFont('Arial','',12);
+
+    $sql = "SELECT i.call_number, i.ts_opened, i.ts_complete, i.call_details,
+                   u.unit, u.dispatch_time, u.arrival_time, u.cleared_time
+            FROM incidents i
+            JOIN incident_units u ON u.incident_id = i.incident_id
+            WHERE u.unit = ?
+              AND DATE(i.ts_opened) BETWEEN ? AND ?
+            ORDER BY i.ts_opened ASC";
+
+    if ($stmt = $link->prepare($sql)) {
+        $stmt->bind_param("sss", $unit, $startdate, $enddate);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            // Table header
+            $pdf->SetFont('Arial','B',9);
+            $pdf->Cell(20,8,'Call #',1);
+            $pdf->Cell(35,8,'Opened',1);
+            $pdf->Cell(35,8,'Completed',1);
+            $pdf->Cell(35,8,'Dispatch',1);
+            $pdf->Cell(35,8,'Arrival',1);
+            $pdf->Cell(35,8,'Cleared',1);
+            $pdf->Ln();
+
+            // Table body
+            $pdf->SetFont('Arial','',8);
+            while ($row = $result->fetch_assoc()) {
+                $pdf->Cell(20,6,$row['call_number'],1);
+                $pdf->Cell(35,6,$row['ts_opened'],1);
+                $pdf->Cell(35,6,$row['ts_complete'],1);
+                $pdf->Cell(35,6,$row['dispatch_time'],1);
+                $pdf->Cell(35,6,$row['arrival_time'],1);
+                $pdf->Cell(35,6,$row['cleared_time'],1);
+                $pdf->Ln();
             }
-            else
-                $i=$sep+1;
-            $sep=-1;
-            $j=$i;
-            $l=0;
-            $nl++;
+        } else {
+            $pdf->Cell(0,10,'No records found for this unit and date range.',1,1,'C');
         }
-        else
-            $i++;
+
+        $stmt->close();
+    } else {
+        $pdf->Cell(0,10,'Database query could not be prepared.',1,1,'C');
     }
-    return $nl;
-}
 
-function DLSColumnHeader() {
-  $this->SetY(30);
-  $this->SetFont('Arial','B',10);
-  $this->Cell(15,5,'No.', 1,0);
-  $this->Cell(35,5,'Call Type',1,0);
-  $this->Cell(65,5,'Details',1,0);
-  $this->Cell(38,5,'Time Opened',1,0);
-  $this->Cell(38,5,'Time Closed',1,0);
-  $this->Ln(7);
-}
-}
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="CAD_Unit_Report.pdf"');
+    header('Cache-Control: private, max-age=0, must-revalidate');
+    header('Pragma: public');
 
-function index_sort($a, $b)
-{
-  if ($a == $b) {
-    return 0;
-  }
-  return (date('H:i:s', strtotime($a[0])) > date('H:i:s', strtotime($b[0]))) ? 1 : -1;
-}
+    $pdf->Output('F', 'php://output');
+    exit;
 
-// End subclass definition
-// Begin main program
-
-$daterange = '';
-
-if (isset($_GET["unit"]) && isset($_GET["startdate"])) {
-  $startdate = MysqlClean($_GET,"startdate",20);
-  $enddate = MysqlClean($_GET,"enddate",20);
-  $daterange = $startdate;
-  $selected_date='';
-  if ($startdate != $enddate) {
-    $daterange .= " - $enddate";
-  }
-  else {
-    $selected_date = $startdate;
-  }
-
-  $unit = MysqlClean($_GET,"unit",20);
-  //$date = MysqlClean($_GET,"selected-date",20);
-  $pdf=new PDF();
-  $pdf->SetReportsCriteria($unit, $daterange);
-  $pdf->SetFont('Arial','',10);
-  $pdf->Open();
-  $pdf->AliasNbPages();
-  $pdf->AddPage('P','Letter');
-  $pdf->SetFillColor(230);
-  
-  syslog(LOG_INFO, $_SESSION['username'] . " generated units report");
-  $index = array();
-  $associated_incidents = array();
-  $associated_messages = array();
-  $associated_callnums = array();
-  
-  $incidents = MysqlQuery("SELECT incident_id,call_number FROM incidents");
-  while ($incident = mysqli_fetch_object($incidents)) {
-    $associated_callnums[$incident->incident_id] = $incident->call_number;
-  }
-  mysqli_free_result($incidents);
-
-  $incident_units = MysqlQuery("SELECT * FROM incident_units WHERE unit='$unit' AND 
-    dispatch_time >= '$startdate' AND (cleared_time <= '$enddate 23:59:59' OR cleared_time IS NULL) ORDER BY dispatch_time ASC");
-
-  while ($incident_unit = mysqli_fetch_object($incident_units)) {
-    if ($incident_unit->arrival_time == "0000-00-00 00:00:00") $incident_unit->arrival_time = "";
-    if ($incident_unit->cleared_time == "0000-00-00 00:00:00") $incident_unit->cleared_time = "";
-    $associated_incidents[$incident_unit->incident_id] =  $incident_unit;
-    array_push($index, array($incident_unit->dispatch_time, "Incident", $incident_unit->incident_id));
-  }
-  mysqli_free_result($incident_units);
-
-  $messages = MysqlQuery("SELECT * FROM messages WHERE unit='$unit' AND ts >= '$startdate' AND ts <= '$enddate 23:59:59'");
-  while ($message = mysqli_fetch_object($messages)) {
-     $associated_messages[$message->oid] = $message;
-     array_push($index, array($message->ts, "Message", $message->oid));
-  }
-  mysqli_free_result($messages);
-
-  usort($index, "index_sort");
-  
-  foreach ($index as $index_item) {
-    if ($index_item[1] == "Incident") {
-      $line = $associated_incidents[$index_item[2]];
-      $pdf->Ln(2);
-      $pdf->SetFont('Arial','B',10);
-      if ($associated_callnums[$line->incident_id] != '') {
-        $pdf->Cell(70, 5, 'Attached to Call #' . $associated_callnums[$line->incident_id], 0, 1, "L");
-      } else {
-        $pdf->Cell(70, 5, 'Attached to Call (Error: Call Number not available - Incident ID# ' .$line->incident_id.')', 0, 1, "L");
-      }
-
-      //if($date == substr($line->dispatch_time, 0, 10)) {
-        //$line->dispatch_time = substr($line->dispatch_time, 11);
-      //} else {
-        //$line->dispatch_time = substr($line->dispatch_time, 11) . ' ' . substr($line->dispatch_time, 0, 10);
-      //}
-      //
-      //if($date == substr($line->arrival_time, 0, 10)) {
-        //$line->arrival_time = substr($line->arrival_time, 11);
-      //} else {
-        //$line->arrival_time = substr($line->arrival_time, 11) . ' ' . substr($line->arrival_time, 0, 10);
-      //}
-      //
-      //if($date == substr($line->transport_time, 0, 10)) {
-        //$line->transport_time = substr($line->transport_time, 11);
-      //} else {
-        //$line->transport_time = substr($line->transport_time, 11) . ' ' . substr($line->transport_time, 0, 10);
-      //}
-//
-      //if($date == substr($line->transportdone_time, 0, 10)) {
-        //$line->transportdone_time = substr($line->transportdone_time, 11);
-      //} else {
-        //$line->transportdone_time = substr($line->transportdone_time, 11) . ' ' . substr($line->transportdone_time, 0, 10);
-      //}
-        //
-      //if($date == substr($line->cleared_time, 0, 10)) {
-        //$line->cleared_time = substr($line->cleared_time, 11);
-      //} else {
-        //$line->cleared_time = substr($line->cleared_time, 11) . ' ' . substr($line->cleared_time, 0, 10);
-      //}
-        
-      $thisrow_top = $pdf->GetY();
-      $pdf->SetFont('Arial','',10);
-      $pdf->Cell(5,5); $pdf->Cell(30, 5, "Dispatch Time:", 0, 0, "R");  $pdf->Cell(3); $pdf->MultiCell(80, 5, dls_ymdhmstime($line->dispatch_time), 1, 1);
-      $pdf->Cell(5,5); $pdf->Cell(30, 5, "Arrival Time:", 0, 0, "R");    $pdf->Cell(3); $pdf->MultiCell(80, 5, dls_ymdhmstime($line->arrival_time), 1, 1);
-      $pdf->Cell(5,5); $pdf->Cell(30, 5, "Transporting Time:", 0, 0, "R");    $pdf->Cell(3); $pdf->MultiCell(80, 5, dls_ymdhmstime($line->transport_time), 1, 1);
-      $pdf->Cell(5,5); $pdf->Cell(30, 5, "At Destination:", 0, 0, "R");    $pdf->Cell(3); $pdf->MultiCell(80, 5, dls_ymdhmstime($line->transportdone_time), 1, 1);
-      $pdf->Cell(5,5); $pdf->Cell(30, 5, "Cleared Time:", 0, 0, "R");    $pdf->Cell(3); $pdf->MultiCell(80, 5, dls_ymdhmstime($line->cleared_time), 1, 1);
-      $pdf->Ln(5);
-      $pdf->SetFont('Arial','B',10);
-      if ($associated_callnums[$line->incident_id] != '') {
-        $pdf->Cell(5,5); $pdf->Cell(30, 5, "Notes Logged For $unit For Call ".$associated_callnums[$line->incident_id], 0, 1);
-      } else {
-        $pdf->Cell(5,5); $pdf->Cell(30, 5, "Notes Logged For $unit For Incident ".$line->incident_id, 0, 1);
-      }
-
-      $pdf->SetFont('Arial','',10);
-    
-      $notequery = "SELECT * FROM incident_notes WHERE incident_id=".$line->incident_id." AND unit='$unit' ORDER BY note_id";
-      $noteresult = MysqlQuery($notequery) or die("In query: $notequery<br>\nError: ".mysql_error());
-      if (mysqli_num_rows($noteresult) > 0) {
-        $pdf->Cell(10,5);
-        $pdf->Cell(40,5,"Time");
-        $pdf->Cell(40,5,"Unit");
-        $pdf->Cell(40,5,"Note");
-        $pdf->Ln(5);
-        while ($note = mysqli_fetch_object($noteresult)) {
-          $pdf->Cell(10,5);
-          $pdf->Cell(40,5,$note->ts,1,0);
-          $pdf->Cell(40,5,$note->unit,1,0);
-          $pdf->MultiCell(80,5,$note->message,1);
-        }
-      }
-      else {
-        $pdf->Cell(5,5);
-        $pdf->Cell(50,5, "- No notes logged by $unit for this incident -");
-        $pdf->Ln(5);
-      }
-      mysqli_free_result($noteresult);
-          
-      $pdf->Ln(5);
+} catch (Exception $e) {
+    if (!headers_sent()) {
+        header('Content-Type: text/plain');
     }
-    elseif ($index_item[1] == "Message") {
-      $line = $associated_messages[$index_item[2]];
-      $pdf->SetFont('Arial','B',10);
-      $pdf->Cell(55, 5, "Message at ".dls_ymdhmstime($line->ts), 0, 0, "L"); $pdf->Cell(3);
-      $pdf->SetFont('Arial','',10);
-      $pdf->MultiCell(120, 5, $line->message, 1, 1);
-    }
-    else {
-      print ("Invalid index element: ".$index_item[1]."<br>");
-    }
-    //$thisrow_endhdr = $pdf->GetY();
-    //$pdf->SetY($thisrow_endhdr+5);
-  }
-  $pdf->SetDisplayMode('fullpage','single');
-  mysqli_close($link);
-  
-  $pdf->Output("CAD Unit Details Report - $unit - $daterange.pdf", 'D');
+    echo "PDF generation failed: " . $e->getMessage();
 }
-else 
-{
-  die("Unit selection not set.");
-}
-
 ?>
+
