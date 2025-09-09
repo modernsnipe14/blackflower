@@ -18,7 +18,6 @@
 
 // Reports Header display (MUST BE PNG):
   $REPORTS_LOGO = __DIR__ . '/Logos/logo.png';
-  $REPORTS_TITLE = "Black Flower Computer Aided Dispatch";
 
 // Booleans:
   $BULLETIN_TITLE_SCAN = 1;      //
