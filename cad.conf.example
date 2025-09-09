@@ -16,9 +16,8 @@
   $HEADER_LOGO = "Logos/logo.png";
   $HEADER_TITLE = "Black&nbsp;Flower<br>Computer&nbsp;Aided&nbsp;Dispatch";
 
-// Reports Header display (MUST BE JPG):
-  $REPORTS_LOGO = "Logos/logo2.jpg";
-	$REPORTS_LOGO = __DIR__ . '/Logos/logo.png';
+// Reports Header display (MUST BE PNG):
+  $REPORTS_LOGO = __DIR__ . '/Logos/logo.png';
   $REPORTS_TITLE = "Black Flower Computer Aided Dispatch";
 
 // Booleans:
