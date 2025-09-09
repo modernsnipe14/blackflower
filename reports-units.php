@@ -1,29 +1,49 @@
 <?php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
 
 define('FPDF_FONTPATH', __DIR__ . '/font/');
 require_once('cad.conf');
 require_once('fpdf.php');
 
-// --- Database connect ---
 $link = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
 if ($link->connect_error) {
     header('Content-Type: text/plain');
     die("Database connection failed: " . $link->connect_error);
 }
-
 class PDF extends FPDF
 {
+    private $title;
+
+    function __construct($title)
+    {
+        parent::__construct();
+        $this->title = $title;
+    }
+
     function Header()
     {
-        global $REPORTS_LOGO;
-        if (!empty($REPORTS_LOGO) && file_exists($REPORTS_LOGO)) {
-            $this->Image($REPORTS_LOGO, 175, 8, 20);
+        global $REPORTS_LOGO, $HEADER_TITLE;
+        if (!empty($REPORTS_LOGO) && is_readable($REPORTS_LOGO)) {
+            try {
+                $this->Image($REPORTS_LOGO, 175, 8, 20);
+            } catch (Exception $e) {
+                // ignore logo errors
+            }
         }
+
+        if (!empty($HEADER_TITLE)) {
+            $this->SetFont('Arial','B',16);
+            $header_text = $HEADER_TITLE;
+            $header_text = str_replace("<br>", "\n", $header_text);
+            $header_text = html_entity_decode($header_text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $header_text = str_replace("\xC2\xA0", ' ', $header_text); // normalize &nbsp;
+            $this->MultiCell(0,10,$header_text,0,'L');
+        }
+
         $this->SetFont('Arial','B',14);
-        $this->Cell(0,10,'Unit Report',0,1,'L');
+        $this->Cell(0,10, $this->title, 0, 1, 'L');
         $this->Ln(5);
     }
 
@@ -45,7 +65,8 @@ try {
     if (empty($startdate)) $startdate = '1900-01-01';
     if (empty($enddate))   $enddate   = date('Y-m-d');
 
-    $pdf = new PDF();
+    $title = "Unit Report - " . ($unit !== '' ? $unit : 'All Units') . " (" . $startdate . " to " . $enddate . ")";
+    $pdf = new PDF($title);
     $pdf->AliasNbPages();
     $pdf->AddPage();
     $pdf->SetFont('Arial','',12);
@@ -59,12 +80,11 @@ try {
             ORDER BY i.ts_opened ASC";
 
     if ($stmt = $link->prepare($sql)) {
-        $stmt->bind_param("sss", $unit, $startdate, $enddate);
+        $stmt->bind_param('sss', $unit, $startdate, $enddate);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result->num_rows > 0) {
-            // Table header
             $pdf->SetFont('Arial','B',9);
             $pdf->Cell(20,8,'Call #',1);
             $pdf->Cell(35,8,'Opened',1);
@@ -74,7 +94,6 @@ try {
             $pdf->Cell(35,8,'Cleared',1);
             $pdf->Ln();
 
-            // Table body
             $pdf->SetFont('Arial','',8);
             while ($row = $result->fetch_assoc()) {
                 $pdf->Cell(20,6,$row['call_number'],1);
@@ -99,14 +118,11 @@ try {
     header('Cache-Control: private, max-age=0, must-revalidate');
     header('Pragma: public');
 
-    $pdf->Output('F', 'php://output');
+    $pdf->Output('F','php://output');
     exit;
 
 } catch (Exception $e) {
-    if (!headers_sent()) {
-        header('Content-Type: text/plain');
-    }
+    if (!headers_sent()) { header('Content-Type: text/plain'); }
     echo "PDF generation failed: " . $e->getMessage();
 }
 ?>
-
